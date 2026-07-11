@@ -1,0 +1,16 @@
+{
+  "name": "Inventário Arbóreo ESALQ",
+  "short_name": "Inv. ESALQ",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#e9ecef",
+  "theme_color": "#2ca02c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Bras%C3%A3o_Esalq.png/150px-Bras%C3%A3o_Esalq.png",
+      "sizes": "150x150",
+      "type": "image/png"
+    }
+  ]
+}

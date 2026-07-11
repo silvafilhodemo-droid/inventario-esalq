@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Especialista: Inventário, Risco e Ecossistemas (ESALQ/USP)</title>
+    <style>
+        /* Proteção contra seleção de texto e toque longo */
+        body { 
+            -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; 
+            -moz-user-select: none; -ms-user-select: none; user-select: none; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #e9ecef; margin: 0; padding: 10px; color: #333; 
+        }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
+        h2 { text-align: center; color: #2ca02c; font-size: 1.4rem; margin-top: 0; border-bottom: 3px solid #2ca02c; padding-bottom: 10px; text-transform: uppercase; }
+        
+        details { background: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; margin-bottom: 10px; padding: 5px 10px; }
+        summary { font-weight: bold; color: #4682B4; font-size: 1.1rem; padding: 10px 5px; cursor: pointer; outline: none; list-style: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; display: inline-block; width: 20px; transition: 0.2s; }
+        details[open] summary::before { content: '▼'; }
+        
+        .section-content { padding: 10px 0; border-top: 1px solid #eee; }
+        .form-group { margin-bottom: 12px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        
+        label { font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px; color: #555; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; }
+        input[type="checkbox"] { transform: scale(1.3); margin-right: 8px; }
+        .chk-label { display: flex; align-items: center; font-weight: normal; font-size: 0.95rem; margin-bottom: 5px; }
+
+        .highlight-input { background-color: #e8f4f8 !important; font-weight: bold; color: #0056b3; }
+        .coord-input { background-color: #f0f8ff !important; font-family: monospace; font-weight: bold; }
+        .combo-especie { background-color: #fff3cd; border-color: #ffeeba; font-weight: bold; color: #856404; }
+        .money-input { background-color: #eef7ee !important; font-weight: bold; color: #2ca02c; }
+
+        /* Dashboard Financeiro */
+        .dashboard { background: #fdfdfd; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-top: 10px; }
+        .dash-total { text-align: center; margin-bottom: 15px; }
+        .dash-total h3 { margin: 0; font-size: 1rem; color: #555; text-transform: uppercase; }
+        .dash-total .valor-total { font-size: 2rem; font-weight: 900; color: #2ca02c; margin: 5px 0; }
+        .bar-container { margin-bottom: 10px; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; margin-bottom: 3px; color: #555; }
+        .bar-bg { width: 100%; background-color: #eee; border-radius: 4px; height: 10px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .c-imobiliario { background-color: #8e44ad; } .c-climatico { background-color: #e67e22; } .c-hidrologico { background-color: #3498db; } .c-ar { background-color: #1abc9c; } .c-co2 { background-color: #7f8c8d; }
+
+        /* Métricas Físicas */
+        .fisica-header { text-align: center; font-size: 1.05rem; font-weight: bold; color: #4682B4; margin: 20px 0 10px 0; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .fisica-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .fisica-box { background: #f0f8ff; border: 1px solid #b8daff; border-radius: 6px; padding: 10px; text-align: center; }
+        .fisica-box .icon { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+        .fisica-box .valor { font-size: 1.3rem; font-weight: 900; color: #0056b3; display: block; }
+        .fisica-box .desc { font-size: 0.75rem; color: #555; display: block; margin-top: 2px; line-height: 1.2; }
+
+        /* Módulo de Canópia (Novo) */
+        .canopy-analyzer { background: #fffde7; border: 2px dashed #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        .canopy-canvas { width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #ccc; margin-top: 10px; display: none; background: #000; }
+
+        /* TRAQ e Memória */
+        .painel-traq { background: #eef7ee; border: 2px solid #2ca02c; padding: 15px; border-radius: 6px; margin-top: 10px; }
+        .painel-resultado { background: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 6px; margin-top: 15px; }
+        .linha-resultado { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; align-items: center; }
+        .risco-box { padding: 5px 10px; border-radius: 4px; color: white; text-transform: uppercase; font-weight: 900; }
+        .risco-baixo { background-color: #5cb85c; } .risco-medio { background-color: #f0ad4e; } .risco-alto { background-color: #d9534f; } .risco-extremo { background-color: #8b0000; } .risco-nd { background-color: #6c757d; }
+        .memoria-box { background: #eef2f5; border: 2px solid #4682B4; border-radius: 8px; padding: 15px; margin-top: 25px; text-align: center; }
+        .memoria-box span { font-size: 1.2rem; font-weight: bold; color: #0056b3; display: block; margin-bottom: 10px; }
+
+        /* Botões */
+        .btn-salvar { background: #007bff; color: white; width: 100%; padding: 15px; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s; }
+        .btn-export, .btn-relatorio { background: #28a745; color: white; width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
+        .btn-relatorio { background: #6f42c1; }
+        .btn-limpar { background: #dc3545; color: white; width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-ia { background: #ff9800; color: white; width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
+        .btn-gnss { background: #0056b3; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-camera { background: #17a2b8; color: white; display: block; width: 100%; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold; cursor: pointer; text-decoration: none; box-sizing: border-box; }
+        input[type="file"] { display: none; }
+        .preview-img { width: 100%; max-height: 150px; object-fit: cover; margin-top: 8px; border-radius: 4px; border: 2px solid #ccc; display: none; }
+
+        /* Relatório (Laudo) */
+        #painelRelatorio { display: none; background: white; padding: 20px; border-radius: 8px; }
+        .rel-header { text-align: center; border-bottom: 3px solid #2ca02c; padding-bottom: 15px; margin-bottom: 20px; }
+        .rel-header h1 { margin: 0; color: #2ca02c; font-size: 1.6rem; text-transform: uppercase; }
+        .rel-header p { margin: 5px 0 0 0; color: #555; font-size: 0.9rem; }
+        .rel-section { margin-bottom: 25px; }
+        .rel-section h3 { color: #4682B4; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; }
+        .rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; font-size: 0.95rem; }
+        .rel-item strong { color: #444; }
+        .rel-item { background: #fdfdfd; padding: 5px; border-bottom: 1px dashed #eee; }
+        .rel-risco-box { text-align: center; padding: 20px; border: 2px solid #ccc; border-radius: 8px; margin-top: 20px; background: #f9f9f9; }
+        .rel-risco-box h2 { margin: 0 0 10px 0; font-size: 1.3rem; }
+        .rel-risco-badge { display: inline-block; padding: 10px 20px; font-size: 1.4rem; border-radius: 6px; }
+        .rel-fotos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-voltar { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        .btn-imprimir { background: #007bff; color: white; padding: 15px; width: 100%; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 20px; }
+        .footer-creditos { text-align: center; font-size: 0.8rem; color: #888; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; line-height: 1.4; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; max-width: 100%; padding: 0; }
+            #modoFormulario, .btn-voltar, .btn-imprimir, .btn-relatorio, .btn-export, .memoria-box, .btn-salvar { display: none !important; }
+            #painelRelatorio { display: block !important; padding: 0; }
+            .rel-risco-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-inside: avoid; }
+            .rel-fotos { page-break-inside: avoid; }
+            .footer-creditos { display: block; border-top: 1px solid #ccc; margin-top: 40px; }
+        }
+    </style>
+</head>
+
+<body oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;" onload="atualizarContadorMemoria()">
+
+<div class="container">
+    
+    <div id="modoFormulario">
+        <h2>Inventário Especialista Integrado</h2>
+        
+        <form id="formCadgeo">
+            <details open>
+                <summary>1. Identificação e GNSS</summary>
+                <div class="section-content">
+                    <button type="button" class="btn-gnss" id="btnGNSS" onclick="capturarGNSS()">📍 Capturar Coordenada GPS</button>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Latitude (Y)</label><input type="text" name="Latitude" id="Latitude" class="coord-input" readonly placeholder="Aguardando..."></div>
+                        <div class="form-group"><label>Longitude (X)</label><input type="text" name="Longitude" id="Longitude" class="coord-input" readonly placeholder="Aguardando..."></div>
+                    </div>
+                    <div id="msgGNSS" style="font-size: 0.85rem; color: #d9534f; margin-bottom: 10px; text-align: center;"></div>
+                    <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                    
+                    <div class="form-group">
+                        <label>🌳 Seleção Rápida de Espécie</label>
+                        <select id="selEspecie" class="combo-especie" onchange="atualizarEspecie()">
+                                                        <option value="|">-- Selecione a espécie ou digite abaixo --</option>
+                            <option value="Handroanthus heptaphyllus|Ipê-roxo">Handroanthus heptaphyllus (Ipê-roxo)</option>
+                            <option value="Caesalpinia pluviosa|Sibipiruna">Caesalpinia pluviosa (Sibipiruna)</option>
+                            <option value="Schinus terebinthifolia|Aroeira-pimenteira">Schinus terebinthifolia (Aroeira)</option>
+                            <option value="Guazuma ulmifolia|Mutambo">Guazuma ulmifolia (Mutambo)</option>
+                            <option value="Tipuana tipu|Tipuana">Tipuana tipu (Tipuana)</option>
+                            <option value="Handroanthus chrysotrichus|Ipê-amarelo">Handroanthus chrysotrichus (Ipê-amarelo)</option>
+                            <option value="Handroanthus roseoalba|Ipê-branco">Handroanthus roseoalba (Ipê-branco)</option>
+                            <option value="Pterocarpus rohrii|Aldrago">Pterocarpus rohrii (Aldrago)</option>
+                            <option value="Eugenia uniflora|Pitanga">Eugenia uniflora (Pitanga)</option>
+                            <option value="Inga laurina|Ingá">Inga laurina (Ingá)</option>
+                            <option value="Dypsis lutescens|Areca-bambu">Dypsis lutescens (Areca-bambu)</option>
+                            <option value="Ficus benjamina|Figueira-benjamina">Ficus benjamina (Figueira)</option>
+                            <option value="Pterocarpus violaceus|Aldrago">Pterocarpus violaceus (Aldrago)</option>
+                            <option value="Anadenanthera colubrina|Angico-branco">Anadenanthera colubrina (Angico-branco)</option>
+                            <option value="Luehea grandiflora|Açoita-cavalo">Luehea grandiflora (Açoita-cavalo)</option>
+                            <option value="Libidibia ferrea|Pau-ferro">Libidibia ferrea (Pau-ferro)</option>
+                            <option value="Sapindus saponaria|Sabão-de-soldado">Sapindus saponaria (Sabão-de-soldado)</option>
+                            <option value="Machaerium stipitatum|Pau-faca">Machaerium stipitatum (Pau-faca)</option>
+                            <option value="|">Outra (Digitar manualmente abaixo)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group"><label>Nome_cientifico</label><input type="text" name="Nome_cientifico" id="Nome_cientifico"></div>
+                        <div class="form-group"><label>Nome Comum</label><input type="text" name="Nome Comum" id="Nome_Comum"></div>
+                        <div class="form-group"><label>Nr placa</label><input type="text" name="Nr placa" id="Nr_placa"></div>
+                        <div class="form-group"><label>Localização (Rua/Av)</label><input type="text" name="Localização" id="Localizacao"></div>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>2. Biometria e Dendrometria</summary>
+                <div class="section-content grid-3">
+                    <div class="form-group"><label>DAP (cm)</label><input type="number" step="0.01" name="DAP" id="DAP"></div>
+                    <div class="form-group"><label>Altura Total (cm)</label><input type="number" name="Altura (cm)" id="AlturaCm"></div>
+                    <div class="form-group"><label>Slenderness (H/D)</label><input type="number" step="0.01" name="Slenderness" id="Slenderness" class="highlight-input" readonly></div>
+                    
+                    <div class="form-group"><label>Copa diâmetro 1 (m)</label><input type="number" step="0.01" name="Copa diametro1" id="CopaD1"></div>
+                    <div class="form-group"><label>Copa diâmetro 2 (m)</label><input type="number" step="0.01" name="Copa diametro2" id="CopaD2"></div>
+                    <div class="form-group"><label>Área da Copa (m²)</label><input type="number" step="0.01" name="Area_copa" id="AreaCopa" class="highlight-input" readonly></div>
+
+                    <div class="form-group"><label>Altura 1a Ram (cm)</label><input type="number" name="Altura 1a Ram" id="Altura1aRamCm"></div>
+                    <div class="form-group"><label>Comprimento Copa (cm)</label><input type="number" step="0.01" name="Comprimento copa (cm)" id="ComprimentoCopa" class="highlight-input" readonly></div>
+                    <div class="form-group"><label>Volume Copa (m³)</label><input type="number" step="0.01" name="Volume Copa" id="VolumeCopa" class="highlight-input" readonly></div>
+                </div>
+            </details>
+
+            <details open>
+                <summary>3. Serviços Ecossistêmicos (i-Tree Avançado)</summary>
+                <div class="section-content">
+                    
+                    <div class="canopy-analyzer">
+                        <label class="btn-camera" style="background:#d35400;">📸 Tirar Foto da Copa (Zênite) para Densidade
+                            <input type="file" accept="image/*" capture="environment" onchange="analisarCanopia(this)">
+                        </label>
+                        <canvas id="canvasCanopia" class="canopy-canvas"></canvas>
+                        <input type="hidden" name="Fotografia_Canopia" id="Fotografia_Canopia">
+                        
+                        <div class="form-group" style="margin-top: 15px; text-align: left;">
+                            <label>Índice de Densidade Foliar (%) - <i>Autocalculado ou Manual</i></label>
+                            <input type="number" step="0.1" name="Densidade_Copa_Perc" id="DensidadeCopa" class="highlight-input" value="100" oninput="calcBiometriaEEcossistemas()">
+                        </div>
+                    </div>
+                    
+                    <div class="fisica-header">Quantificação Física Anual (Ajustada por Densidade)</div>
+                    <div class="fisica-grid">
+                        <div class="fisica-box"><span class="icon">❄️</span><span class="valor" id="qArCond">0 h</span><span class="desc">Ar-Cond. Equivalente</span><input type="hidden" name="Ecossistema_Ar_Condicionado_h" id="valFisicoArCond"></div>
+                        <div class="fisica-box"><span class="icon">🌬️</span><span class="valor" id="qPoluente">0 g</span><span class="desc">Poluentes Interceptados</span><input type="hidden" name="Ecossistema_Poluentes_g" id="valFisicoPoluente"></div>
+                        <div class="fisica-box"><span class="icon">💧</span><span class="valor" id="qAgua">0 L</span><span class="desc">Retenção Hidrológica</span><input type="hidden" name="Ecossistema_Agua_L" id="valFisicoAgua"></div>
+                        <div class="fisica-box"><span class="icon">🌳</span><span class="valor" id="qCarbono">0 kg</span><span class="desc">Sequestro de CO2</span><input type="hidden" name="Ecossistema_Carbono_kg" id="valFisicoCo2"></div>
+                    </div>
+
+                    <hr style="border-top: 1px dashed #ccc; margin: 20px 0 10px 0;">
+
+                    <div class="form-group">
+                        <label>Valor Base Estimado (R$ / m² / ano)</label>
+                        <input type="number" step="0.01" name="Valor_McPherson_R$_por_m2" id="ValorBase" class="money-input" value="18.50">
+                    </div>
+                    
+                    <div class="dashboard">
+                        <div class="dash-total">
+                            <h3>Benefício Financeiro Total Anual</h3>
+                            <div class="valor-total" id="lblTotalEco">R$ 0,00</div>
+                            <input type="hidden" name="Serviços_ecossistêmicos" id="valTotalEco">
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-label"><span>🏡 Imobiliário / Estético (45%)</span><span id="lblImob">R$ 0,00</span></div>
+                            <div class="bar-bg"><div class="bar-fill c-imobiliario" id="barImob" style="width: 0%;"></div></div>
+                            <input type="hidden" name="Poder imobiliário estético" id="valImob">
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-label"><span>☀️ Climático / Energia (25%)</span><span id="lblClima">R$ 0,00</span></div>
+                            <div class="bar-bg"><div class="bar-fill c-climatico" id="barClima" style="width: 0%;"></div></div>
+                            <input type="hidden" name="Poder climático" id="valClima">
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-label"><span>💧 Hidrológico / Drenagem (15%)</span><span id="lblHidro">R$ 0,00</span></div>
+                            <div class="bar-bg"><div class="bar-fill c-hidrologico" id="barHidro" style="width: 0%;"></div></div>
+                            <input type="hidden" name="Poder hidrológico" id="valHidro">
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-label"><span>🌬️ Qualidade do Ar (10%)</span><span id="lblAr">R$ 0,00</span></div>
+                            <div class="bar-bg"><div class="bar-fill c-ar" id="barAr" style="width: 0%;"></div></div>
+                            <input type="hidden" name="Poder do Ar" id="valAr">
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-label"><span>🌳 Redução de CO2 (5%)</span><span id="lblCo2">R$ 0,00</span></div>
+                            <div class="bar-bg"><div class="bar-fill c-co2" id="barCo2" style="width: 0%;"></div></div>
+                            <input type="hidden" name="Poder redução CO2" id="valCo2">
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>4. Sítio, Sanidade e Defeitos</summary>
+                <div class="section-content">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Condição geral</label>
+                            <select name="Condição geral" id="Condicao_geral">
+                                <option value="">-- Selecione --</option><option value="Ótima">Ótima</option><option value="Boa">Boa</option><option value="Regular">Regular</option><option value="Ruim">Ruim</option><option value="Morta">Morta</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Injurias raízes</label>
+                            <select name="Injurias raízes" id="Injurias_raizes">
+                                <option value="">-- Selecione --</option><option value="Nenhuma">Nenhuma</option><option value="Leve">Leve</option><option value="Moderada">Moderada</option><option value="Grave">Grave</option><option value="Severa">Severa</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Fiação primária</label><select name="Fiação primária" id="FiacaoPrimaria"><option value="">-- Selecione --</option><option value="Sem conflito">Sem conflito</option><option value="Atravessando a copa">Atravessando a copa</option><option value="Tangenciando">Tangenciando</option></select></div>
+                        <div class="form-group"><label>Raiz erguendo calcada</label><select name="Raiz erguendo calcada" id="RaizCalcada"><option value="">-- Selecione --</option><option value="Nao">Não</option><option value="Leve">Leve</option><option value="Grave">Grave</option></select></div>
+                    </div>
+                    
+                    <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                    <div class="grid-3" id="grupoDefeitos">
+                        <label class="chk-label"><input type="checkbox" name="Cupim" value="Sim"> Cupim</label>
+                        <label class="chk-label"><input type="checkbox" name="Formiga carpinteira" value="Sim"> Formiga</label>
+                        <label class="chk-label"><input type="checkbox" name="Podridão negra" value="Sim" id="chkPNegra"> Podr. negra</label>
+                        <label class="chk-label"><input type="checkbox" name="Podridão branca" value="Sim" id="chkPBranca"> Podr. branca</label>
+                        <label class="chk-label"><input type="checkbox" name="Oco base" value="Sim" id="chkOcoBase"> Oco base</label>
+                        <label class="chk-label"><input type="checkbox" name="Oco 1aRam" value="Sim" id="chkOcoRam"> Oco 1aRam</label>
+                        <label class="chk-label"><input type="checkbox" name="Cancro" value="true" id="chkCancro"> Cancro</label>
+                        <label class="chk-label"><input type="checkbox" name="Colo soterrado" value="Sim"> Colo soterr.</label>
+                        <label class="chk-label"><input type="checkbox" name="Seca base" value="Sim"> Seca base</label>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>5. Matriz de Risco (ISA TRAQ)</summary>
+                <div class="section-content">
+                    <div class="form-group"><label>Gravidade Alvo</label><input type="text" name="Gravidade Alvo" id="GravidadeAlvo"></div>
+                    <div class="painel-traq">
+                        <button type="button" class="btn-ia" onclick="sugerirMatrizTRAQ()">🤖 Auto-Sugerir Matriz de Risco</button>
+                        <div class="grid-3">
+                            <div class="form-group">
+                                <label>Prob. de Falha:</label>
+                                <select id="probFalha" onchange="calcularTRAQ()">
+                                    <option value="Selecione">-- Selecione --</option><option value="Improvavel">Improvável</option><option value="Possivel">Possível</option><option value="Provavel">Provável</option><option value="Iminente">Iminente</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Prob. Impacto:</label>
+                                <select id="probImpacto" onchange="calcularTRAQ()">
+                                    <option value="Selecione">-- Selecione --</option><option value="Muito Baixa">Muito Baixa</option><option value="Baixa">Baixa</option><option value="Media">Média</option><option value="Alta">Alta</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Consequências:</label>
+                                <select id="consequencia" onchange="calcularTRAQ()">
+                                    <option value="Selecione">-- Selecione --</option><option value="Despreziveis">Desprezíveis</option><option value="Menores">Menores</option><option value="Significativas">Significativas</option><option value="Graves">Graves</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="painel-resultado">
+                            <div class="linha-resultado"><span>Risco Global TRAQ:</span><span id="resRisco" class="risco-box risco-nd">N/D</span></div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>6. Gestão e Mídia</summary>
+                <div class="section-content">
+                    <div class="grid-2">
+                        <div class="form-group"><label>Ação imediata</label><input type="text" name="Ação imediata" id="Acao_imediata"></div>
+                        <div class="form-group"><label>Monitoramento</label><input type="text" name="Periodicidade de monitoramento" id="Periodicidade"></div>
+                    </div>
+                    <div class="grid-3" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label class="btn-camera">📸 Foto 1<input type="file" accept="image/*" capture="environment" onchange="processarFoto(this, 'imgFoto1', 'Fotografia')"></label>
+                            <input type="hidden" name="Fotografia" id="Fotografia">
+                            <img id="imgFoto1" class="preview-img">
+                        </div>
+                        <div class="form-group">
+                            <label class="btn-camera">📸 Foto 2<input type="file" accept="image/*" capture="environment" onchange="processarFoto(this, 'imgFoto2', 'Fotografia_1')"></label>
+                            <input type="hidden" name="Fotografia_1" id="Fotografia_1">
+                            <img id="imgFoto2" class="preview-img">
+                        </div>
+                        <div class="form-group">
+                            <label class="btn-camera">📸 Foto 3<input type="file" accept="image/*" capture="environment" onchange="processarFoto(this, 'imgFoto3', 'Fotografia_2')"></label>
+                            <input type="hidden" name="Fotografia_2" id="Fotografia_2">
+                            <img id="imgFoto3" class="preview-img">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:10px;"><label>OBS</label><input type="text" name="OBS" id="OBS"></div>
+                </div>
+            </details>
+        </form>
+
+        <div class="memoria-box">
+            <span id="contadorMemoria">🌲 Árvores na Memória: 0</span>
+            <button class="btn-salvar" onclick="salvarArvoreNaMemoria()">💾 Gravar Árvore na Memória</button>
+            <div class="grid-2">
+                <button class="btn-relatorio" onclick="gerarRelatorio()" style="margin: 0;">📄 Gerar Laudo PDF</button>
+                <button class="btn-export" onclick="exportarLoteCSV()" style="margin: 0;">⬇ Exportar Lote CSV</button>
+            </div>
+            <button class="btn-limpar" onclick="limparMemoria()" style="margin-top: 10px;">🗑️ Limpar Memória do Aparelho</button>
+        </div>
+    </div>
+
+    <div id="painelRelatorio">
+        <button class="btn-voltar" onclick="fecharRelatorio()">⬅ Voltar ao Formulário</button>
+        
+        <div class="rel-header">
+            <h1>Laudo de Avaliação Arbórea</h1>
+            <p id="relDataHora"></p>
+            <p><strong>Localização:</strong> <span id="relLocalizacao"></span></p>
+            <p><strong>GNSS:</strong> <span id="relCoord"></span></p>
+        </div>
+
+        <div class="rel-section">
+            <h3>1. Identificação e Dendrometria</h3>
+            <div class="rel-grid">
+                <div class="rel-item"><strong>Placa Nº:</strong> <span id="relPlaca"></span></div>
+                <div class="rel-item"><strong>Espécie:</strong> <i><span id="relCientifico"></span></i> (<span id="relComum"></span>)</div>
+                <div class="rel-item"><strong>DAP:</strong> <span id="relDap"></span> cm</div>
+                <div class="rel-item"><strong>Altura Total:</strong> <span id="relAltura"></span> cm</div>
+                <div class="rel-item"><strong>Área Projetada (100%):</strong> <span id="relAreaCopa"></span> m²</div>
+                <div class="rel-item"><strong>Área Efetiva (Densidade <span id="relDensidade"></span>%):</strong> <span id="relAreaEfetiva" style="color: #d35400; font-weight: bold;"></span> m²</div>
+            </div>
+        </div>
+
+        <div class="rel-section">
+            <h3>2. Quantificação de Serviços Ecossistêmicos (Ajustada)</h3>
+            <div class="rel-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div class="rel-item" style="text-align: center; border-left: 4px solid #4682B4;">
+                    <div style="font-size: 0.8rem; color: #555;">Ar-Cond. Equivalente</div>
+                    <strong id="relFisicoArCond" style="font-size: 1.1rem; color: #0056b3;">0 h</strong>
+                </div>
+                <div class="rel-item" style="text-align: center; border-left: 4px solid #1abc9c;">
+                    <div style="font-size: 0.8rem; color: #555;">Poluentes Filtrados</div>
+                    <strong id="relFisicoPoluente" style="font-size: 1.1rem; color: #1abc9c;">0 g</strong>
+                </div>
+                <div class="rel-item" style="text-align: center; border-left: 4px solid #3498db;">
+                    <div style="font-size: 0.8rem; color: #555;">Água Retida</div>
+                    <strong id="relFisicoAgua" style="font-size: 1.1rem; color: #3498db;">0 L</strong>
+                </div>
+                <div class="rel-item" style="text-align: center; border-left: 4px solid #7f8c8d;">
+                    <div style="font-size: 0.8rem; color: #555;">CO2 Sequestrado</div>
+                    <strong id="relFisicoCo2" style="font-size: 1.1rem; color: #7f8c8d;">0 kg</strong>
+                </div>
+            </div>
+            <div class="rel-grid" style="grid-template-columns: 1fr;">
+                <div class="rel-item" style="font-size: 1.1rem; text-align: center;"><strong>BENEFÍCIO FINANCEIRO TOTAL:</strong> <span id="relEcoTotal" style="color: #2ca02c; font-weight: bold;">R$ 0,00</span></div>
+                <div class="rel-grid" style="background: #fdfdfd; padding: 10px; border: 1px solid #eee;">
+                    <div>• Imobiliário/Estético: <strong id="relEcoImob"></strong></div>
+                    <div>• Climático/Energia: <strong id="relEcoClima"></strong></div>
+                    <div>• Hidrológico: <strong id="relEcoHidro"></strong></div>
+                    <div>• Qualidade do Ar: <strong id="relEcoAr"></strong></div>
+                    <div style="grid-column: span 2;">• Redução de CO2: <strong id="relEcoCo2"></strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rel-section">
+            <h3>3. Sanidade e Defeitos</h3>
+            <div class="rel-grid">
+                <div class="rel-item"><strong>Condição Geral:</strong> <span id="relCondicao"></span></div>
+                <div class="rel-item"><strong>Injúrias Raízes:</strong> <span id="relRaizes"></span></div>
+                <div class="rel-item"><strong>Fiação:</strong> <span id="relFiacao"></span></div>
+                <div class="rel-item" style="grid-column: span 2;"><strong>Defeitos Detetados:</strong> <span id="relDefeitos"></span></div>
+            </div>
+        </div>
+
+        <div class="rel-risco-box">
+            <h2>Matriz de Risco (ISA TRAQ)</h2>
+            <p><strong>Alvo em Risco:</strong> <span id="relAlvo"></span></p>
+            <div id="relBadgeRisco" class="rel-risco-badge risco-nd">N/D</div>
+            <p style="margin-top: 15px; font-weight: bold; text-align: left;">Ação Imediata Recomendada:</p>
+            <p style="text-align: left; background: white; padding: 10px; border-radius: 4px; border: 1px solid #ccc;"><span id="relAcao"></span></p>
+            <p style="text-align: left; font-size: 0.85rem; margin-top: 10px;"><strong>OBS:</strong> <span id="relObs"></span></p>
+        </div>
+
+        <div class="rel-section" style="margin-top: 25px;">
+            <h3>4. Registos Fotográficos</h3>
+            <div class="rel-fotos" id="relGaleriaFotos"></div>
+        </div>
+
+        <button class="btn-imprimir" onclick="imprimirPDF()">🖨 Imprimir / Guardar PDF</button>
+    </div>
+
+    <div class="footer-creditos">
+        <strong>Laboratório de Silvicultura Urbana - ESALQ/USP</strong><br>
+        Desenvolvido sob coordenação do Prof. Dr. Demóstenes Ferreira da Silva Filho
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // BLOQUEIOS ANTI-CÓPIA DE SEGURANÇA
+    // ==========================================
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123) return false; 
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false; 
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false; 
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false; 
+        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false; 
+        if(e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)) return false; 
+    }
+
+    // ==========================================
+    // FUNÇÕES DE SEGURANÇA E AUXILIARES
+    // ==========================================
+    function safeSetText(destId, value) { let dest = document.getElementById(destId); if(dest) dest.innerText = value; }
+    function obterValor(id) { let el = document.getElementById(id); return el ? (parseFloat(el.value) || 0) : 0; }
+    function obterTexto(id) { let el = document.getElementById(id); return el && el.value ? el.value : ""; }
+    function formatarDinheiro(v) { return "R$ " + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    // ==========================================
+    // VISÃO COMPUTACIONAL (CANOPY ANALYZER)
+    // ==========================================
+    function analisarCanopia(input) {
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let img = new Image();
+                img.onload = function() {
+                    let canvas = document.getElementById('canvasCanopia');
+                    let ctx = canvas.getContext('2d');
+                    canvas.style.display = 'block';
+
+                    // Redimensionamento para performance no telemóvel
+                    let MAX_WIDTH = 300;
+                    let scale = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scale;
+
+                    // Desenha a imagem na tela
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Puxa os pixéis para análise
+                    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    let data = imageData.data;
+                    let pixelsFolha = 0;
+                    let totalPixels = canvas.width * canvas.height;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        let r = data[i];
+                        let g = data[i + 1];
+                        let b = data[i + 2];
+                        
+                        // Heurística de Detenção de Céu (Sky)
+                        // Considera céu: Brilho muito alto OU predominância forte do canal Azul
+                        let isSky = (r > 180 && g > 180 && b > 180) || (b > r + 20 && b > g + 20);
+                        
+                        if (!isSky) {
+                            pixelsFolha++;
+                            // Pinta as folhas detetadas de verde brilhante
+                            data[i] = 0;     // R
+                            data[i+1] = 255; // G
+                            data[i+2] = 0;   // B
+                        } else {
+                            // Pinta o céu de branco puro
+                            data[i] = 255;
+                            data[i+1] = 255;
+                            data[i+2] = 255;
+                        }
+                    }
+                    
+                    // Atualiza o canvas visualmente
+                    ctx.putImageData(imageData, 0, 0);
+
+                    // Calcula o Índice de Densidade (%)
+                    let densidade = (pixelsFolha / totalPixels) * 100;
+                    document.getElementById('DensidadeCopa').value = densidade.toFixed(1);
+                    
+                    // Grava nome do ficheiro para CSV
+                    let ts = new Date().toISOString().replace(/[:.-]/g, "");
+                    document.getElementById('Fotografia_Canopia').value = "IMG_CANOPIA_" + ts + ".jpg";
+
+                    // Força recálculo dos serviços ecossistêmicos com a nova densidade
+                    calcBiometriaEEcossistemas();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+
+    // ==========================================
+    // SISTEMA DE BANCO DE DADOS (LOCALSTORAGE)
+    // ==========================================
+    function atualizarContadorMemoria() {
+        let db = JSON.parse(localStorage.getItem('bd_inventario')) || [];
+        document.getElementById('contadorMemoria').innerText = "🌲 Árvores na Memória: " + db.length;
+    }
+
+    function limparPaineisVisuais() {
+        document.getElementById('qArCond').innerText = "0 h"; document.getElementById('qPoluente').innerText = "0 g";
+        document.getElementById('qAgua').innerText = "0 L"; document.getElementById('qCarbono').innerText = "0 kg";
+        document.getElementById('lblTotalEco').innerText = "R$ 0,00";
+        let ids = ['Imob','Clima','Hidro','Ar','Co2'];
+        for(let x=0; x<ids.length; x++) { document.getElementById('lbl'+ids[x]).innerText = "R$ 0,00"; document.getElementById('bar'+ids[x]).style.width = "0%"; }
+        document.getElementById('resRisco').innerText = "N/D"; document.getElementById('resRisco').className = "risco-box risco-nd";
+        
+        for(let i=1; i<=3; i++) { let img = document.getElementById('imgFoto'+i); if(img) { img.src = ""; img.style.display = "none"; } }
+        let cnp = document.getElementById('canvasCanopia'); if(cnp) { cnp.style.display = "none"; }
+        document.getElementById('DensidadeCopa').value = "100";
+        document.getElementById('ValorBase').value = "18.50";
+    }
+
+    function salvarArvoreNaMemoria() {
+        let form = document.getElementById('formCadgeo'); 
+        let inputs = form.querySelectorAll('input, select');
+        let arvore = {};
+        
+        for(let k=0; k<inputs.length; k++) {
+            let input = inputs[k];
+            if (input.id === "selEspecie" || !input.name || input.id === "probFalha" || input.id === "probImpacto" || input.id === "consequencia" || input.type === 'file') continue;
+            if (input.type === 'checkbox') { arvore[input.name] = input.checked ? input.value : ""; } 
+            else { arvore[input.name] = input.value ? input.value.replace(/"/g, '""') : ""; }
+        }
+        
+        let rs = document.getElementById('resRisco');
+        arvore["Risco_TRAQ_Calculado"] = rs ? rs.innerText : "N/D";
+        arvore["Data_Registro_App"] = new Date().toLocaleString('pt-PT');
+        
+        let db = JSON.parse(localStorage.getItem('bd_inventario')) || [];
+        db.push(arvore);
+        localStorage.setItem('bd_inventario', JSON.stringify(db));
+        
+        form.reset();
+        limparPaineisVisuais();
+        atualizarContadorMemoria();
+        
+        alert("✅ Árvore gravada com sucesso na memória do dispositivo!\n\nO formulário foi limpo. Pode iniciar a avaliação da próxima árvore.");
+        window.scrollTo(0,0);
+    }
+
+    function exportarLoteCSV() {
+        let db = JSON.parse(localStorage.getItem('bd_inventario')) || [];
+        if(db.length === 0) { alert("⚠️ A memória está vazia.\nGraves árvores antes de exportar."); return; }
+
+        let cabecalhos = Object.keys(db[0]);
+        let csvContent = '"' + cabecalhos.join('","') + '"\n';
+        
+        for(let i=0; i<db.length; i++) {
+            let linha = [];
+            for(let j=0; j<cabecalhos.length; j++) {
+                let valor = db[i][cabecalhos[j]];
+                linha.push('"' + (valor ? valor : "") + '"');
+            }
+            csvContent += linha.join(',') + '\n';
+        }
+        
+        let blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        let url = URL.createObjectURL(blob); let link = document.createElement("a");
+        let d = new Date(); let ts = d.getFullYear()+""+(d.getMonth()+1)+""+d.getDate()+"_"+d.getHours()+d.getMinutes();
+        
+        link.setAttribute("href", url); 
+        link.setAttribute("download", "Lote_Inventario_" + db.length + "_Arvores_" + ts + ".csv");
+        link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function limparMemoria() {
+        let db = JSON.parse(localStorage.getItem('bd_inventario')) || [];
+        if(db.length === 0) return;
+        if(confirm("⚠️ AVISO CRÍTICO!\n\nTem a certeza que deseja APAGAR as " + db.length + " árvores guardadas no telemóvel?\nSÓ FAÇA ISTO SE JÁ EXPORTOU O FICHEIRO CSV!")) {
+            localStorage.removeItem('bd_inventario');
+            atualizarContadorMemoria();
+            alert("Memória limpa com sucesso.");
+        }
+    }
+
+    // ==========================================
+    // CÁLCULOS RESTANTES (Ajustados pela Densidade)
+    // ==========================================
+    function processarFoto(input, imgId, hiddenId) {
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let img = document.getElementById(imgId); img.src = e.target.result; img.style.display = 'block';
+                let data = new Date(); let ts = data.getFullYear()+""+(data.getMonth()+1)+""+data.getDate()+"_"+data.getHours()+""+data.getMinutes();
+                document.getElementById(hiddenId).value = "IMG_" + hiddenId + "_" + ts + ".jpg";
+            }; reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function calcBiometriaEEcossistemas() {
+        let dap = obterValor('DAP'), alt = obterValor('AlturaCm'), ram = obterValor('Altura1aRamCm');
+        let d1 = obterValor('CopaD1'), d2 = obterValor('CopaD2'), vBase = obterValor('ValorBase');
+        
+        // Novo Parâmetro
+        let densidadePerc = obterValor('DensidadeCopa');
+        if(densidadePerc <= 0 || densidadePerc > 100) densidadePerc = 100; // Proteção contra zeros
+
+        // Biometria Padrão
+        let elSlender = document.getElementById('Slenderness');
+        if(dap > 0 && alt > 0) { let s = alt/dap; elSlender.value = s.toFixed(2); elSlender.style.color = s > 60 ? "red" : "#0056b3"; } else { elSlender.value = ""; }
+        let comp = 0; if(alt > 0 && ram >= 0 && alt > ram) { comp = alt - ram; document.getElementById('ComprimentoCopa').value = comp.toFixed(2); } else { document.getElementById('ComprimentoCopa').value = ""; }
+        
+        let areaProjetada = 0; 
+        if(d1 > 0 && d2 > 0) { areaProjetada = Math.PI * (d1/2) * (d2/2); document.getElementById('AreaCopa').value = areaProjetada.toFixed(2); } else { document.getElementById('AreaCopa').value = ""; }
+        if(areaProjetada > 0 && comp > 0) { document.getElementById('VolumeCopa').value = ((2/3) * areaProjetada * (comp/100)).toFixed(2); } else { document.getElementById('VolumeCopa').value = ""; }
+
+        // MÚLTIPLO POR DENSIDADE: A Área Efetiva Folhar
+        let areaEfetiva = areaProjetada * (densidadePerc / 100);
+
+        // FÍSICOS (Agora usam a Área Efetiva)
+        if(areaEfetiva > 0) {
+            let mAc = Math.round(areaEfetiva * 2.1), mPo = (areaEfetiva * 4.2).toFixed(1), mAg = (areaEfetiva * 28.5).toFixed(1), mC2 = (areaEfetiva * 1.2).toFixed(1);
+            document.getElementById('qArCond').innerText = mAc + " h"; document.getElementById('qPoluente').innerText = mPo + " g"; document.getElementById('qAgua').innerText = mAg + " L"; document.getElementById('qCarbono').innerText = mC2 + " kg";
+            document.getElementById('valFisicoArCond').value = mAc; document.getElementById('valFisicoPoluente').value = mPo; document.getElementById('valFisicoAgua').value = mAg; document.getElementById('valFisicoCo2').value = mC2;
+        } else {
+            document.getElementById('qArCond').innerText = "0 h"; document.getElementById('qPoluente').innerText = "0 g"; document.getElementById('qAgua').innerText = "0 L"; document.getElementById('qCarbono').innerText = "0 kg";
+            document.getElementById('valFisicoArCond').value = ""; document.getElementById('valFisicoPoluente').value = ""; document.getElementById('valFisicoAgua').value = ""; document.getElementById('valFisicoCo2').value = "";
+        }
+
+        // FINANCEIROS (Agora usam a Área Efetiva)
+        let total = areaEfetiva * vBase;
+        if (total > 0) {
+            document.getElementById('lblTotalEco').innerText = formatarDinheiro(total); document.getElementById('valTotalEco').value = total.toFixed(2);
+            let vi = total * 0.45, vc = total * 0.25, vh = total * 0.15, va = total * 0.10, vco = total * 0.05;
+            document.getElementById('lblImob').innerText = formatarDinheiro(vi); document.getElementById('valImob').value = vi.toFixed(2); document.getElementById('barImob').style.width = '45%';
+            document.getElementById('lblClima').innerText = formatarDinheiro(vc); document.getElementById('valClima').value = vc.toFixed(2); document.getElementById('barClima').style.width = '25%';
+            document.getElementById('lblHidro').innerText = formatarDinheiro(vh); document.getElementById('valHidro').value = vh.toFixed(2); document.getElementById('barHidro').style.width = '15%';
+            document.getElementById('lblAr').innerText = formatarDinheiro(va); document.getElementById('valAr').value = va.toFixed(2); document.getElementById('barAr').style.width = '10%';
+            document.getElementById('lblCo2').innerText = formatarDinheiro(vco); document.getElementById('valCo2').value = vco.toFixed(2); document.getElementById('barCo2').style.width = '5%';
+        } else {
+            document.getElementById('lblTotalEco').innerText = "R$ 0,00"; document.getElementById('valTotalEco').value = "";
+            let ids = ['Imob','Clima','Hidro','Ar','Co2']; for(let x=0; x<ids.length; x++) { document.getElementById('lbl'+ids[x]).innerText = "R$ 0,00"; document.getElementById('val'+ids[x]).value = ""; document.getElementById('bar'+ids[x]).style.width = "0%"; }
+        }
+    }
+    ['DAP', 'AlturaCm', 'Altura1aRamCm', 'CopaD1', 'CopaD2', 'ValorBase'].forEach(function(id) { let el = document.getElementById(id); if(el) el.addEventListener('input', calcBiometriaEEcossistemas); });
+
+    function sugerirMatrizTRAQ() {
+        let g = 0, m = 0;
+        let cOco = document.getElementById('chkOcoBase'); if(cOco && cOco.checked) g++; let cB = document.getElementById('chkPBranca'); if(cB && cB.checked) g++; let cN = document.getElementById('chkPNegra'); if(cN && cN.checked) g++;
+        let cOr = document.getElementById('chkOcoRam'); if(cOr && cOr.checked) m++; let cC = document.getElementById('chkCancro'); if(cC && cC.checked) m++; 
+        let s = obterValor('Slenderness'); if(s > 70) g++; else if(s > 50) m++;
+        let pf = "Possivel"; if(g >= 2) pf = "Iminente"; else if(g === 1 || m >= 2) pf = "Provavel";
+        let pi = "Media"; let fP = obterTexto('FiacaoPrimaria'), rC = obterTexto('RaizCalcada'); if(fP === "Atravessando a copa" || rC === "Grave") pi = "Alta";
+        let c = "Menores"; let dap = obterValor('DAP'); if(dap > 50) c = "Graves"; else if(dap > 30) c = "Significativas";
+        if(document.getElementById('probFalha')) document.getElementById('probFalha').value = pf; if(document.getElementById('probImpacto')) document.getElementById('probImpacto').value = pi; if(document.getElementById('consequencia')) document.getElementById('consequencia').value = c;
+        calcularTRAQ();
+    }
+
+    function calcularTRAQ() {
+        let f = obterTexto('probFalha'), i = obterTexto('probImpacto'), c = obterTexto('consequencia'), comb = "N/D";
+        if(f !== "Selecione" && i !== "Selecione" && f !== "" && i !== "") {
+            if(f === "Iminente") comb = (i==="Alta") ? "Muito Provável" : ((i==="Media") ? "Provável" : ((i==="Baixa") ? "Pouco Provável" : "Improvável"));
+            else if(f === "Provavel") comb = (i==="Alta") ? "Provável" : ((i==="Media") ? "Pouco Provável" : "Improvável");
+            else if(f === "Possivel") comb = (i==="Alta") ? "Pouco Provável" : "Improvável";
+            else if(f === "Improvavel") comb = "Improvável";
+        }
+        let r = "N/D", cr = "risco-nd";
+        if(comb !== "N/D" && c !== "Selecione" && c !== "") {
+            if(comb === "Muito Provável") { r = (c==="Graves")?"Muito Alto":((c==="Significativas")?"Alto":((c==="Menores")?"Médio":"Baixo")); cr = (c==="Graves")?"risco-extremo":((c==="Significativas")?"risco-alto":((c==="Menores")?"risco-medio":"risco-baixo")); }
+            else if(comb === "Provável") { r = (c==="Graves"||c==="Significativas")?"Alto":((c==="Menores")?"Médio":"Baixo"); cr = (c==="Graves"||c==="Significativas")?"risco-alto":((c==="Menores")?"risco-medio":"risco-baixo"); }
+            else if(comb === "Pouco Provável") { r = (c==="Graves"||c==="Significativas")?"Médio":"Baixo"; cr = (c==="Graves"||c==="Significativas")?"risco-medio":"risco-baixo"; }
+            else if(comb === "Improvável") { r = "Baixo"; cr = "risco-baixo"; }
+        }
+        let elRisco = document.getElementById('resRisco'); if(elRisco) { elRisco.innerText = r; elRisco.className = "risco-box " + cr; }
+    }
+
+    function gerarRelatorio() {
+        try {
+            let d = new Date(); safeSetText('relDataHora', ("0"+d.getDate()).slice(-2) + "/" + ("0"+(d.getMonth()+1)).slice(-2) + "/" + d.getFullYear() + " às " + ("0"+d.getHours()).slice(-2) + ":" + ("0"+d.getMinutes()).slice(-2));
+            safeSetText('relLocalizacao', obterTexto('Localizacao') || "Não informada");
+            let lat = obterTexto('Latitude'), lon = obterTexto('Longitude'); safeSetText('relCoord', lat ? "Lat: " + lat + " | Lon: " + lon : "Sem sinal GPS");
+            safeSetText('relPlaca', obterTexto('Nr_placa') || "S/N"); safeSetText('relCientifico', obterTexto('Nome_cientifico') || "N/A"); safeSetText('relComum', obterTexto('Nome_Comum') || "N/A");
+            
+            safeSetText('relDap', obterTexto('DAP') || "-"); safeSetText('relAltura', obterTexto('AlturaCm') || "-"); safeSetText('relSlender', obterTexto('Slenderness') || "-"); 
+            
+            let areaP = obterTexto('AreaCopa') || 0;
+            let densP = obterTexto('DensidadeCopa') || 100;
+            let areaEf = (parseFloat(areaP) * (parseFloat(densP)/100)).toFixed(2);
+            safeSetText('relAreaCopa', areaP); safeSetText('relDensidade', densP); safeSetText('relAreaEfetiva', areaEf > 0 ? areaEf : "-");
+            safeSetText('relVolCopa', obterTexto('VolumeCopa') || "-");
+
+            let vArCond = document.getElementById('qArCond'); safeSetText('relFisicoArCond', vArCond ? vArCond.innerText : "0 h");
+            let vPol = document.getElementById('qPoluente'); safeSetText('relFisicoPoluente', vPol ? vPol.innerText : "0 g");
+            let vAgua = document.getElementById('qAgua'); safeSetText('relFisicoAgua', vAgua ? vAgua.innerText : "0 L");
+            let vCo2 = document.getElementById('qCarbono'); safeSetText('relFisicoCo2', vCo2 ? vCo2.innerText : "0 kg");
+
+            let tEco = document.getElementById('lblTotalEco'); safeSetText('relEcoTotal', tEco ? tEco.innerText : "R$ 0,00");
+            let vImob = document.getElementById('lblImob'); safeSetText('relEcoImob', vImob ? vImob.innerText : "R$ 0,00");
+            let vClima = document.getElementById('lblClima'); safeSetText('relEcoClima', vClima ? vClima.innerText : "R$ 0,00");
+            let vHidro = document.getElementById('lblHidro'); safeSetText('relEcoHidro', vHidro ? vHidro.innerText : "R$ 0,00");
+            let vAr = document.getElementById('lblAr'); safeSetText('relEcoAr', vAr ? vAr.innerText : "R$ 0,00");
+            let vrCo2 = document.getElementById('lblCo2'); safeSetText('relEcoCo2', vrCo2 ? vrCo2.innerText : "R$ 0,00");
+
+            safeSetText('relCondicao', obterTexto('Condicao_geral') || "Não avaliada"); safeSetText('relRaizes', obterTexto('Injurias_raizes') || "Não avaliada"); safeSetText('relFiacao', obterTexto('FiacaoPrimaria') || "Sem conflito");
+            
+            let defeitosArr = []; let gpDef = document.getElementById('grupoDefeitos');
+            if(gpDef) { let chks = gpDef.querySelectorAll('input[type="checkbox"]'); for(let j=0; j<chks.length; j++) { if(chks[j].checked && chks[j].parentElement) defeitosArr.push(chks[j].parentElement.innerText.trim()); } }
+            safeSetText('relDefeitos', defeitosArr.length > 0 ? defeitosArr.join(", ") : "Nenhum defeito marcado");
+
+            safeSetText('relAlvo', obterTexto('GravidadeAlvo') || "Não especificado");
+            let badge = document.getElementById('relBadgeRisco'), boxFonte = document.getElementById('resRisco');
+            if(badge && boxFonte) { badge.innerText = boxFonte.innerText; badge.className = "rel-risco-badge " + (boxFonte.className.split(' ')[1] || "risco-nd"); }
+
+            safeSetText('relAcao', obterTexto('Acao_imediata') || "Sem recomendação."); safeSetText('relObs', obterTexto('OBS') || "-");
+
+            let galeria = document.getElementById('relGaleriaFotos'); 
+            if(galeria) {
+                galeria.innerHTML = ""; 
+                for(let i=1; i<=3; i++) { let img = document.getElementById('imgFoto'+i); if(img && img.style.display === 'block') { let clone = img.cloneNode(); clone.style.width = "100%"; clone.style.height = "200px"; clone.style.objectFit = "cover"; clone.style.borderRadius = "4px"; clone.style.border = "1px solid #ccc"; galeria.appendChild(clone); } }
+            }
+
+            let mForm = document.getElementById('modoFormulario'), pRel = document.getElementById('painelRelatorio');
+            if(mForm) mForm.style.display = 'none'; if(pRel) pRel.style.display = 'block'; window.scrollTo(0,0);
+        } catch (erro) { alert("Erro na montagem do Laudo. Verifique os dados."); }
+    }
+
+    function fecharRelatorio() { 
+        let mForm = document.getElementById('modoFormulario'), pRel = document.getElementById('painelRelatorio');
+        if(pRel) pRel.style.display = 'none'; if(mForm) mForm.style.display = 'block'; 
+    }
+
+    function imprimirPDF() {
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) { alert("A preparar o Laudo...\n\n⚠️ INSTRUÇÃO PARA TELEMÓVEL:\nSe a impressão não abrir automaticamente, o seu navegador bloqueou o comando.\n\nPara guardar o laudo:\n1. Toque nos 3 pontos (Menu do navegador).\n2. Selecione 'Partilhar' e depois 'Imprimir'.\n3. Guarde como PDF."); }
+        setTimeout(function() { window.print(); }, 800);
+    }
+</script>
+
+</body>
+</html>

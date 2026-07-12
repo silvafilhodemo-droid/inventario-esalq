@@ -1,4 +1,4 @@
-const CACHE_NAME = 'esalq-inventario-v2';
+const CACHE_NAME = 'esalq-inventario-v3';
 const urlsToCache = [
   './',
   './index.html',
